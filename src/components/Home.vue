@@ -1,6 +1,5 @@
 <template>
-    <Sidebar>
-        <h1 class="p-8 text-2xl font-extrabold text-cyan-600 mt-2">Data Karyawan</h1>
+    <Sidebar >
         <div class="bg-white rounded-lg shadow-lg p-6 ml-5 mr-5">
             <div class="overflow-x-auto p-4">
                 <div v-if="loading">Loading...</div>
@@ -193,11 +192,11 @@ const simpanData = async () => {
     error.value = null;
 
     try {
-        if (isEdit.value==true && selectedId.value != '') {
-            let response=await  axios.put(`https://gofarputraperdana.my.id/api/users/${selectedId.value}`, {
+        if (isEdit.value == true && selectedId.value != '') {
+            let response = await axios.put(`https://gofarputraperdana.my.id/api/users/${selectedId.value}`, {
                 name: name.value,
                 email: email.value,
-                password:password.value
+                password: password.value
             });
 
             console.log(response.status);
