@@ -13,37 +13,54 @@
 
                     <div class="flex justify-end mb-3 w-full">
                         <button @click="prepareAdd"
-                            class="w-full md:w-auto  bg-green-400 hover:bg-green-500 text-white py-1 px-3 rounded">Tambah
-                            Karyawan</button>
+                            class="w-full md:w-auto bg-green-400 hover:bg-green-500 text-white py-1 px-3 rounded">
+                            Tambah Karyawan
+                        </button>
                     </div>
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 text-sm">
                             <thead class="bg-cyan-600 text-white text-center uppercase text-xs">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 font-medium">No</th>
-                                    <th scope="col" class="px-6 py-3  font-medium">Nama</th>
-                                    <th scope="col" class="px-6 py-3  font-medium">Email</th>
-                                    <th scope="col" class="px-6 py-3  font-medium">Action</th>
-
+                                    <th class="px-6 py-3 font-medium">No</th>
+                                    <th class="px-6 py-3 font-medium">Nama</th>
+                                    <th class="px-6 py-3 font-medium">Email</th>
+                                    <th class="px-6 py-3 font-medium">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200">
-                                <tr v-for="(user, index) in users" :key="user.id">
-                                    <td class="px-6 py-4 whitespace-nowrap text-center">{{ index + 1 }}</td>
+                                <tr class="text-center" v-for="(user, index) in users.data" :key="user.id">
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ index + 1 }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ user.name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">{{ user.email }}</td>
-                                    <td class="flex">
-                                        <button></button>
+                                    <td class="px-6 py-4 whitespace-nowrap flex justify-center gap-2">
+                                        <button
+                                            class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded transition"
+                                            @click="editData(user)">Edit</button>
+                                        <button
+                                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"
+                                            @click="deleteData(user.id)">Hapus</button>
                                     </td>
                                 </tr>
-                            
                             </tbody>
                         </table>
+
+                        <div class="w-full flex justify-end">
+                            <TailwindPagination class="text-end mt-3"
+                                :data="users"
+                                @pagination-change-page="fetchUsers"
+                                :limit="1"
+                                :keep-length="true"
+                                :item-classes="['bg-white', 'text-gray-700', 'border', 'border-gray-300', 'px-2', 'py-1', 'text-sm']"
+                                :active-classes="['bg-cyan-600', 'text-white']"
+                                :prev-button-class="['bg-gray-200', 'text-gray-700', 'px-3', 'py-1', 'rounded', 'text-sm']"
+                                :next-button-class="['bg-gray-200', 'text-gray-700', 'px-3', 'py-1', 'rounded', 'text-sm']"
+                                prev-label="Prev" next-label="Next">
+                                <template #prev-nav><</template>
+                                <template #next-nav>></template>
+                            </TailwindPagination>
+                        </div>
                     </div>
-
-
-
                 </div>
             </div>
         </div>
@@ -81,45 +98,47 @@
 </template>
 
 <script setup>
+
 import Sidebar from './Sidebar.vue';
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import debounce from 'lodash/debounce';
 import axios from 'axios';
-
-let showModal = ref(false);
-let isEdit = ref(false);
-let selectedId = ref(null);
+import { TailwindPagination } from 'laravel-vue-pagination';
 
 const message = "Data Karyawan";
 
-const searchQuery = ref('');
-const users = ref([]);
+const users = ref({
+    data: [],
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+});
 const loading = ref(true);
 const error = ref(null);
 
-let perPage = 10;
+const searchQuery = ref('');
+const name = ref('');
+const email = ref('');
+const password = ref('');
+const showModal = ref(false);
+const isEdit = ref(false);
+const selectedId = ref(null);
 
-
-
-let name = ref('');
-let email = ref('');
-let password = ref('');
-
-
-
-const fetchUsers = async () => {
+const fetchUsers = async (page = 1) => {
     loading.value = true;
     error.value = null;
 
     try {
         const response = await axios.get(`https://gofarputraperdana.my.id/api/user`, {
-            params: { limit: perPage.value }
+            params: {
+                page: page,
+                limit: users.value.per_page
+            }
         });
 
-        const result = response.data;
-        users.value = result.data;
-
-
+        users.value = response.data;
+        
     } catch (err) {
         error.value = err.response?.data?.message || err.message;
     } finally {
@@ -134,25 +153,12 @@ const searchUsers = async () => {
     try {
         const response = await axios.get('https://gofarputraperdana.my.id/api/usersearch', {
             params: {
-                limit: perPage.value,
+                limit: users.value.per_page,
                 search: searchQuery.value
             }
         });
 
-        const result = response.data;
-        users.value = result.data;
-        lastPage.value = result.last_page;
-
-        const filteredLinks = result.links.filter(link =>
-            link.url !== null && link.label !== '&laquo; Previous' && link.label !== 'Next &raquo;'
-        );
-
-        paginationLinks.value = limitPaginationLinks(filteredLinks, lastPage.value);
-        lastPageUrl.value = result.last_page_url;
-        firstPageUrl.value = result.first_page_url;
-        prevPageUrl.value = result.prev_page_url;
-        nextPageUrl.value = result.next_page_url;
-
+        users.value = response.data;
     } catch (err) {
         error.value = err.response?.data?.message || err.message;
     } finally {
@@ -170,15 +176,12 @@ const simpanData = async () => {
     error.value = null;
 
     try {
-        if (isEdit.value == true && selectedId.value != '') {
-            let response = await axios.put(`https://gofarputraperdana.my.id/api/users/${selectedId.value}`, {
+        if (isEdit.value && selectedId.value) {
+            await axios.put(`https://gofarputraperdana.my.id/api/users/${selectedId.value}`, {
                 name: name.value,
                 email: email.value,
                 password: password.value
             });
-
-            console.log(response.status);
-
         } else {
             await axios.post('https://gofarputraperdana.my.id/api/users', {
                 name: name.value,
@@ -187,7 +190,7 @@ const simpanData = async () => {
             });
         }
 
-        // reset form
+        // Reset form
         name.value = '';
         email.value = '';
         password.value = '';
@@ -210,8 +213,6 @@ const editData = (data) => {
     selectedId.value = data.id;
     isEdit.value = true;
     showModal.value = true;
-    console.log(data.id)
-
 };
 
 const prepareAdd = () => {
@@ -241,8 +242,7 @@ const deleteData = async (id) => {
 
 const debounceSearch = debounce(searchUsers, 500);
 
-
-
-onMounted(fetchUsers);
-watch(fetchUsers);
+onMounted(() => {
+    fetchUsers();
+});
 </script>
