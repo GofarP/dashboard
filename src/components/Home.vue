@@ -2,8 +2,7 @@
     <Sidebar :page-title="message">
         <div class="bg-white rounded-lg shadow-lg p-6 ml-5 mr-5">
             <div class="overflow-x-auto p-4">
-                <div v-if="loading">Loading...</div>
-                <div v-else-if="error" class="text-red-500">{{ error }}</div>
+                <div v-if="error" class="text-red-500">{{ error }}</div>
                 <div v-else>
                     <div class="flex justify-end mb-3 w-full">
                         <input type="text" v-model="searchQuery" @input="debounceSearch"
@@ -94,6 +93,11 @@
                             class="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700">Simpan</button>
                     </div>
                 </form>
+            </div>
+        </div>
+        <div v-if="loading" class="fixed inset-0  flex h-screen justify-center items-center z-50">
+            <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+                <p class="text-2xl text-center">Loading</p>
             </div>
         </div>
     </Sidebar>
