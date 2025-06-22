@@ -56,8 +56,10 @@
                                 :prev-button-class="['bg-gray-200', 'text-gray-700', 'px-3', 'py-1', 'rounded', 'text-sm']"
                                 :next-button-class="['bg-gray-200', 'text-gray-700', 'px-3', 'py-1', 'rounded', 'text-sm']"
                                 prev-label="Prev" next-label="Next">
-                                <template #prev-nav><</template>
-                                <template #next-nav>></template>
+                                <template #prev-nav>&lt;</template>
+
+                                <template #next-nav>&gt;</template>
+
                             </TailwindPagination>
                         </div>
                     </div>
